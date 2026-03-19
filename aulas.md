@@ -862,3 +862,498 @@ const fotos = [
 ✓ Pensar em fluxo de dados
 
 ---
+
+# Aula 3 - Persistência de Dados no Navegador
+
+## Revisão da Aula 2
+
+| Tópico           | O que vimos                                   |
+| ---------------- | --------------------------------------------- |
+| Eventos          | `addEventListener`, `onclick`, objeto `event` |
+| Formulários      | `.value`, `submit`, `event.preventDefault()`  |
+| Estilos          | `.style.propriedade`, `.classList`            |
+| Criação dinâmica | `createElement`, `appendChild`, `innerHTML`   |
+
+**Problema herdado das aulas anteriores:**
+
+Toda vez que a página é recarregada, os dados dos exemplos (contador, lista de tarefas, produtos) somem. Como resolver isso?
+
+---
+
+## 1. O Problema: dados que somem
+
+Variáveis JavaScript vivem na **memória do navegador**:
+
+```js
+let tarefas;
+
+// Métodos e código implementados
+
+tarefas = ["Estudar", "Treinar", "Cozinhar"];
+```
+
+Ao fechar ou recarregar a aba:
+
+```
+tarefas → undefined (a memória foi liberada)
+```
+
+Para dados que **sobrevivem ao recarregamento**, precisamos de um mecanismo de persistência.
+
+---
+
+## 2. Onde persistir dados no Frontend?
+
+| Mecanismo              | Onde fica     | Dura até                |
+| ---------------------- | ------------- | ----------------------- |
+| **Variável JS**        | Memória RAM   | Aba fechar / recarregar |
+| **sessionStorage**     | Navegador     | Aba fechar              |
+| **localStorage**       | Navegador     | Usuário apagar / limpar |
+| **Arquivo / Servidor** | Disco / Banco | Decisão do servidor     |
+
+Nesta aula, foco em `localStorage` e `sessionStorage`.
+
+---
+
+## 3. JSON: o formato que conecta tudo
+
+Antes de falar de Storage, precisamos entender **JSON**.
+
+**JSON** = JavaScript Object Notation. Um formato textual para representar dados.
+
+```json
+{
+  "nome": "Café",
+  "preco": 12.9,
+  "urgente": true
+}
+```
+
+Storage **só aceita texto**. JSON é a forma de transformar objetos/arrays em texto e vice-versa.
+
+---
+
+### JSON.stringify — objeto → texto
+
+```js
+const produto = { nome: "Café", preco: 12.9 };
+
+const texto = JSON.stringify(produto);
+console.log(texto);
+// '{"nome":"Café","preco":12.9}'
+
+console.log(typeof texto); // "string"
+```
+
+---
+
+### JSON.parse — texto → objeto
+
+```js
+const texto = '{"nome":"Café","preco":12.9}';
+
+const produto = JSON.parse(texto);
+console.log(produto.nome); // "Café"
+console.log(produto.preco); // 12.9
+
+console.log(typeof produto); // "object"
+```
+
+---
+
+### Arrays também funcionam
+
+```js
+const lista = ["Leite", "Pão", "Café"];
+
+const texto = JSON.stringify(lista);
+// '["Leite","Pão","Café"]'
+
+const recuperada = JSON.parse(texto);
+// ["Leite", "Pão", "Café"]
+```
+
+---
+
+## 4. localStorage
+
+Armazenamento **persistente** no navegador. Os dados ficam salvos mesmo após fechar a aba ou o navegador.
+
+```js
+// Salvar
+localStorage.setItem("chave", "valor");
+
+// Ler
+const valor = localStorage.getItem("chave");
+
+// Remover uma chave
+localStorage.removeItem("chave");
+
+// Apagar tudo
+localStorage.clear();
+```
+
+---
+
+### Salvando um objeto
+
+```js
+const usuario = { nome: "Ana", pontuacao: 200 };
+
+// Salvar
+localStorage.setItem("usuario", JSON.stringify(usuario));
+
+// Ler
+const dados = localStorage.getItem("usuario");
+const usuarioSalvo = JSON.parse(dados);
+
+console.log(usuarioSalvo.nome); // "Ana"
+```
+
+---
+
+### Cuidado: getItem pode retornar null
+
+```js
+const dados = localStorage.getItem("usuario");
+
+if (dados !== null) {
+  const usuario = JSON.parse(dados);
+  console.log(usuario);
+} else {
+  console.log("Nenhum dado salvo ainda.");
+}
+```
+
+---
+
+### Padrão com operador `||`
+
+Uma forma curta e segura de definir um valor padrão:
+
+```js
+const tarefas = JSON.parse(localStorage.getItem("tarefas")) || [];
+```
+
+Se não houver nada salvo, `getItem` retorna `null`, `JSON.parse(null)` retorna `null`, e `|| []` garante a lista vazia como fallback.
+
+---
+
+## 5. sessionStorage
+
+API **idêntica** ao `localStorage`, com uma diferença fundamental:
+
+```js
+// Salvar
+sessionStorage.setItem("chave", "valor");
+
+// Ler
+sessionStorage.getItem("chave");
+
+// Remover
+sessionStorage.removeItem("chave");
+```
+
+Os dados são **apagados quando a aba é fechada**. Não persistem entre sessões, nem entre abas.
+
+---
+
+### Quando usar sessionStorage?
+
+- Dados de uma sessão de navegação (ex: carrinho temporário)
+- Wizard / formulário multi-etapas (descarta ao sair)
+- Estado temporário que não deve vazar entre sessões
+
+### Quando usar localStorage?
+
+- Preferências do usuário (tema escuro, idioma)
+- Listas persistentes (tarefas, favoritos)
+- Cache local de dados
+
+---
+
+### Comparação Final
+
+|                            | Variável JS    | sessionStorage    | localStorage      |
+| -------------------------- | -------------- | ----------------- | ----------------- |
+| **Duração**                | Até recarregar | Até fechar aba    | Indefinida        |
+| **Capacidade**             | RAM            | ~5 MB             | ~5–10 MB          |
+| **API**                    | —              | `setItem/getItem` | `setItem/getItem` |
+| **Compartilha entre abas** | Não            | Não               | Sim               |
+| **Tipo de dado**           | Qualquer       | Apenas string     | Apenas string     |
+
+---
+
+## 6. Estudo de Caso: Persistindo os exemplos anteriores
+
+### 6.1 Contador (Aula 2 — Exercício 1)
+
+Antes (sem persistência):
+
+```js
+let contador = 0;
+```
+
+---
+
+**Com localStorage:**
+
+```js
+// Carregar valor salvo (ou 0 se não existir)
+let contador = Number(localStorage.getItem("contador")) || 0;
+
+// Atualizar display ao carregar página
+document.querySelector("#contador").innerText = contador;
+
+// Função para atualizar e salvar
+function atualizarContador(novoValor) {
+  contador = novoValor;
+  document.querySelector("#contador").innerText = contador;
+  localStorage.setItem("contador", contador);
+}
+
+document.querySelector("#btn-mais").addEventListener("click", () => {
+  atualizarContador(contador + 1);
+});
+
+document.querySelector("#btn-menos").addEventListener("click", () => {
+  atualizarContador(contador - 1);
+});
+
+document.querySelector("#btn-reset").addEventListener("click", () => {
+  atualizarContador(0);
+});
+```
+
+---
+
+### 6.2 Lista de Tarefas (Aula 2 — Exercício 3)
+
+**Salvar a lista ao adicionar/remover:**
+
+```js
+// Carregar tarefas salvas
+let tarefas = JSON.parse(localStorage.getItem("tarefas")) || [];
+
+// Renderizar tarefas existentes ao abrir a página
+tarefas.forEach((tarefa) => renderizarTarefa(tarefa));
+
+function salvarTarefas() {
+  localStorage.setItem("tarefas", JSON.stringify(tarefas));
+}
+
+function renderizarTarefa(texto) {
+  const lista = document.querySelector("#lista-tarefas");
+  const item = document.createElement("li");
+  item.innerText = texto;
+  item.classList.add("tarefa");
+
+  item.addEventListener("click", () => item.classList.toggle("concluida"));
+
+  const btnRemover = document.createElement("button");
+  btnRemover.innerText = "Remover";
+  btnRemover.addEventListener("click", () => {
+    tarefas = tarefas.filter((t) => t !== texto);
+    salvarTarefas();
+    item.remove();
+  });
+
+  item.appendChild(btnRemover);
+  lista.appendChild(item);
+}
+```
+
+---
+
+```js
+// Adicionar nova tarefa
+document.querySelector("#btn-adicionar").addEventListener("click", () => {
+  const input = document.querySelector("#nova-tarefa");
+  const texto = input.value.trim();
+
+  if (texto === "") return;
+
+  tarefas.push(texto);
+  salvarTarefas();
+  renderizarTarefa(texto);
+  input.value = "";
+});
+```
+
+---
+
+## Exercício de Fixação: Lista de Compras Persistente
+
+**O Cenário:** Criar uma lista de compras que sobrevive ao recarregar a página.
+
+HTML Base:
+
+```html
+<div id="app-compras">
+  <h1>Lista de Compras</h1>
+  <input type="text" id="novo-item" placeholder="Adicionar item..." />
+  <button id="btn-add">Adicionar</button>
+  <ul id="lista"></ul>
+  <button id="btn-limpar">Limpar Lista</button>
+</div>
+```
+
+---
+
+**Missões:**
+
+1. Ao adicionar um item, salvar a lista no `localStorage`
+2. Ao abrir/recarregar a página, carregar e renderizar os itens salvos
+3. Ao clicar no item, marcar como "comprado" (classe `comprado` com risco no texto)
+4. O estado "comprado" também deve ser persistido
+5. O botão "Limpar Lista" remove todos os itens e apaga o localStorage
+
+**Bônus:**
+
+- Usar `sessionStorage` em vez de `localStorage` — o que muda no comportamento?
+- Impedir adicionar item duplicado
+
+---
+
+**Estrutura de dados sugerida:**
+
+```js
+// Em vez de array de strings, usar array de objetos
+let itens = [
+  { nome: "Leite", comprado: false },
+  { nome: "Pão", comprado: true },
+];
+```
+
+Isso permite salvar tanto o nome quanto o estado de cada item.
+
+---
+
+## Desafio: Evoluindo o App de Gerenciamento de Produtos
+
+O App da Aula 2 já funciona, mas perde todos os dados ao recarregar. Vamos evoluí-lo com **persistência em localStorage**.
+
+---
+
+### O que muda na lógica
+
+1. **Ao iniciar:** carregar produtos do localStorage
+2. **Ao adicionar:** salvar lista atualizada no localStorage
+3. **Ao remover:** salvar lista atualizada no localStorage
+4. **Ao destacar:** salvar estado atualizado no localStorage
+
+---
+
+### Estrutura de dados
+
+```js
+// Array de objetos persistido no localStorage
+let produtos = JSON.parse(localStorage.getItem("produtos")) || [];
+
+// Exemplo de produto:
+// { id: 1, nome: "Notebook", preco: 3500, categoria: "Eletrônicos", destaque: false }
+```
+
+---
+
+### Função central de persistência
+
+```js
+function salvarProdutos() {
+  localStorage.setItem("produtos", JSON.stringify(produtos));
+}
+```
+
+Chame `salvarProdutos()` sempre que a lista mudar.
+
+---
+
+### Inicialização da página
+
+```js
+// Ao carregar a página, renderizar produtos salvos
+document.addEventListener("DOMContentLoaded", () => {
+  produtos.forEach((produto) => renderizarProduto(produto));
+  atualizarTotal();
+  renderizarFiltros();
+});
+```
+
+---
+
+### Adicionar produto
+
+```js
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const nome = document.querySelector("#nome").value.trim();
+  const preco = parseFloat(document.querySelector("#preco").value);
+  const categoria = document.querySelector("#categoria").value;
+
+  if (!nome || isNaN(preco) || !categoria) return;
+
+  const novoProduto = {
+    id: Date.now(), // ID único baseado em timestamp
+    nome,
+    preco,
+    categoria,
+    destaque: false,
+  };
+
+  produtos.push(novoProduto);
+  salvarProdutos();
+  renderizarProduto(novoProduto);
+  atualizarTotal();
+  form.reset();
+});
+```
+
+---
+
+### Remover produto
+
+```js
+function removerProduto(id) {
+  produtos = produtos.filter((p) => p.id !== id);
+  salvarProdutos();
+  atualizarTotal();
+}
+```
+
+---
+
+### Destacar produto
+
+```js
+function toggleDestaque(id) {
+  const produto = produtos.find((p) => p.id === id);
+  if (!produto) return;
+
+  produto.destaque = !produto.destaque;
+  salvarProdutos();
+}
+```
+
+---
+
+### Missões
+
+1. Integrar `salvarProdutos()` em todas as operações
+2. Carregar produtos salvos ao iniciar a página com `DOMContentLoaded`
+3. Garantir que o `id` de cada produto é único (`Date.now()` funciona)
+4. Recarregar a página e confirmar que os produtos persistiram
+5. **Bônus:** Adicionar botão "Limpar Tudo" que apaga o localStorage e a lista
+
+---
+
+**Objetivos de Aprendizado:**
+
+✓ Entender por que dados somem sem persistência
+✓ Serializar objetos com `JSON.stringify` e `JSON.parse`
+✓ Usar `localStorage` para ler, salvar e remover dados
+✓ Diferenciar `localStorage` de `sessionStorage`
+✓ Aplicar persistência em uma aplicação real e complexa
+✓ Usar IDs únicos para referenciar itens em listas
+
+---

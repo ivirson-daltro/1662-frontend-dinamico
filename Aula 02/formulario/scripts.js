@@ -54,15 +54,17 @@ form.addEventListener("submit", (event) => {
 email.addEventListener("blur", () => {
   if (!email.value.includes("@")) {
     error.innerText = "Um email válido precisa ser inserido";
+    error.style.color = "#510b0b";
+    error.style.backgroundColor = "#5cfc12";
   } else {
     error.innerText = "";
   }
 });
 
-senha.addEventListener("blur", () => {
-  if (senha.value.length < 6) {
-    error.innerText = "A senha precisa ter ao menos 6 caracteres";
-  } else {
-    error.innerText = "";
-  }
-});
+// senha.addEventListener("blur", () => {
+//   if (senha.value.length < 6) {
+//     error.innerText = "A senha precisa ter ao menos 6 caracteres";
+//   } else {
+//     error.innerText = "";
+//   }
+// });
