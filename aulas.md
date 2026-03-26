@@ -1054,7 +1054,7 @@ sessionStorage.getItem("chave");
 sessionStorage.removeItem("chave");
 ```
 
-Os dados são **apagados quando a aba é fechada**. Não persistem entre sessões, nem entre abas.
+Os dados são **apagados quando a janela é fechada**. Não persistem entre sessões.
 
 ---
 
@@ -1074,13 +1074,13 @@ Os dados são **apagados quando a aba é fechada**. Não persistem entre sessõe
 
 ### Comparação Final
 
-|                            | Variável JS    | sessionStorage    | localStorage      |
-| -------------------------- | -------------- | ----------------- | ----------------- |
-| **Duração**                | Até recarregar | Até fechar aba    | Indefinida        |
-| **Capacidade**             | RAM            | ~5 MB             | ~5–10 MB          |
-| **API**                    | —              | `setItem/getItem` | `setItem/getItem` |
-| **Compartilha entre abas** | Não            | Não               | Sim               |
-| **Tipo de dado**           | Qualquer       | Apenas string     | Apenas string     |
+|                            | Variável JS    | sessionStorage                  | localStorage      |
+| -------------------------- | -------------- | ------------------------------- | ----------------- |
+| **Duração**                | Até recarregar | Até fechar instância do browser | Indefinida        |
+| **Capacidade**             | RAM            | ~5 MB                           | ~5–10 MB          |
+| **API**                    | —              | `setItem/getItem`               | `setItem/getItem` |
+| **Compartilha entre abas** | Não            | Não                             | Sim               |
+| **Tipo de dado**           | Qualquer       | Apenas string                   | Apenas string     |
 
 ---
 

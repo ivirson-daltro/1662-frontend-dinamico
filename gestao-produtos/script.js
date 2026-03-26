@@ -5,15 +5,6 @@ const campoCategoria = document.querySelector("#categoria");
 const campoId = document.querySelector("#id");
 const botaoSalvar = document.querySelector("#salvar");
 
-const produtos = [
-  {
-    id: new Date().getTime(),
-    nome: "Teste",
-    preco: 1,
-    categoria: "Alimentos",
-  },
-];
-
 exibirProdutos();
 
 form.addEventListener("submit", (event) => {
@@ -40,7 +31,7 @@ form.addEventListener("submit", (event) => {
 
 function salvarProduto(produto) {
   produto.id = new Date().getTime();
-  produtos.push(produto);
+  cadastrarProduto(produto);
   form.reset();
   exibirProdutos();
 }
@@ -56,6 +47,7 @@ function preencheFormularioEdicao(event) {
 }
 
 function editarProduto(produtoEditado) {
+  const produtos = obterProdutos();
   const produto = produtos.find((p) => p.id === produtoEditado.id);
   produto.nome = produtoEditado.nome;
   produto.preco = produtoEditado.preco;
@@ -71,6 +63,7 @@ function excluirProduto(event) {
 
   if (result) {
     const id = event.target.dataset.id;
+    const produtos = obterProdutos();
     const index = produtos.findIndex((p) => p.id == id);
     produtos.splice(index, 1);
     exibirProdutos();
@@ -80,6 +73,7 @@ function excluirProduto(event) {
 function exibirProdutos() {
   const listaProdutos = document.querySelector("#lista-produtos");
   listaProdutos.innerHTML = "";
+  const produtos = obterProdutos();
   produtos.forEach((produto) => {
     const divCol = criaElemento(
       "div",
