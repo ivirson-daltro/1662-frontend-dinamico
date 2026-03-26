@@ -22,9 +22,9 @@ form.addEventListener("submit", (event) => {
   const action = event.target.dataset.action;
 
   const nome = campoNome.value;
-  const preco = campoPreco.value;
+  const preco = Number(campoPreco.value);
   const categoria = campoCategoria.value;
-  const id = campoId.value;
+  const id = Number(campoId.value);
 
   if (nome === "" || preco === "" || categoria === "") {
     alert("Alguns campos obrigatórios não foram preenchidos");
@@ -55,8 +55,15 @@ function preencheFormularioEdicao(event) {
   form.setAttribute("data-action", "editar");
 }
 
-function editarProduto(produto) {
-  console.log(produto);
+function editarProduto(produtoEditado) {
+  const produto = produtos.find((p) => p.id === produtoEditado.id);
+  produto.nome = produtoEditado.nome;
+  produto.preco = produtoEditado.preco;
+  produto.categoria = produtoEditado.categoria;
+
+  form.setAttribute("data-action", "salvar");
+  form.reset();
+  exibirProdutos();
 }
 
 function excluirProduto(event) {
