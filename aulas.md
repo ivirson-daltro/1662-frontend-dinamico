@@ -1357,3 +1357,991 @@ function toggleDestaque(id) {
 ✓ Usar IDs únicos para referenciar itens em listas
 
 ---
+
+# Aula 4 - Fetch com Promises e Async/Await
+
+## Revisão da Aula 3
+
+Na aula anterior, persistimos dados no navegador com `localStorage` e `sessionStorage`.
+
+Agora vamos mover esses dados para uma **API usando `json-server`**.
+
+Nesta aula, você verá as **duas formas de consumir APIs**: com **Promises** (`.then/.catch`) e depois refatorando para **Async/Await**.
+
+**Por quê?** Porque entender Promises é fundamental para dominar JavaScript assíncrono.
+
+---
+
+## 1. Por que integrar com API?
+
+Com API, os dados deixam de ficar presos só ao navegador.
+
+- Melhor aproximação de ambiente real
+- Dados centralizados em um serviço
+- Frontend separado da camada de dados
+- Base para aplicações colaborativas
+
+---
+
+## 2. JSON Server: backend fake para desenvolvimento
+
+`json-server` cria uma API REST completa a partir de um arquivo JSON, sem precisar criar um servidor real.
+
+### Instalação
+
+```bash
+npm install -g json-server
+```
+
+---
+
+### Pré-requisito: Node.js instalado
+
+Verifique com:
+
+```bash
+node -v
+npm -v
+```
+
+Se não tiver, baixe em: [nodejs.org](https://nodejs.org)
+
+---
+
+### Criar o arquivo `db.json`
+
+Na pasta do projeto:
+
+```json
+{
+  "produtos": [
+    {
+      "id": 1,
+      "nome": "Notebook",
+      "preco": 3500,
+      "categoria": "Eletrônicos",
+      "destaque": false
+    },
+    {
+      "id": 2,
+      "nome": "Arroz",
+      "preco": 30,
+      "categoria": "Alimentos",
+      "destaque": true
+    }
+  ]
+}
+```
+
+---
+
+### Rodando o servidor
+
+```bash
+npx json-server db.json --port 3000
+```
+
+Saída esperada:
+
+```
+JSON Server started on PORT :3000
+
+Endpoints:
+http://localhost:3000/produtos
+```
+
+---
+
+### Endpoints gerados automaticamente
+
+| Método   | Endpoint        | Ação                   |
+| -------- | --------------- | ---------------------- |
+| `GET`    | `/produtos`     | Listar todos           |
+| `GET`    | `/produtos/:id` | Buscar por ID          |
+| `POST`   | `/produtos`     | Criar                  |
+| `PATCH`  | `/produtos/:id` | Atualizar parcialmente |
+| `DELETE` | `/produtos/:id` | Remover                |
+
+---
+
+## 3. O que é o `fetch`?
+
+`fetch` é a API nativa do navegador para fazer requisições HTTP.
+
+**Retorna uma Promise**, o que significa que o resultado não vem imediatamente.
+
+```js
+const promessa = fetch("http://localhost:3000/produtos");
+console.log(promessa); // Promise { <pending> }
+```
+
+Podemos lidar com Promises de **duas formas**:
+
+1. **`.then/.catch`** (Promises clássicas)
+2. **`async/await`** (sintaxe moderna sobre Promises)
+
+Vamos ver as duas.
+
+---
+
+## 4. Parte 1: CRUD com `fetch` e Promises (`.then/.catch`)
+
+### GET — Listar produtos
+
+```js
+function buscarProdutos() {
+  return fetch("http://localhost:3000/produtos").then((resposta) =>
+    resposta.json(),
+  );
+}
+
+// Uso:
+buscarProdutos()
+  .then((produtos) => {
+    console.log("Produtos carregados:", produtos);
+  })
+  .catch((erro) => {
+    console.error("Erro ao buscar:", erro);
+  });
+```
+
+---
+
+### POST — Criar produto
+
+```js
+function criarProduto(produto) {
+  return fetch("http://localhost:3000/produtos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(produto),
+  }).then((resposta) => resposta.json());
+}
+
+// Uso:
+criarProduto({ nome: "Notebook", preco: 3500, categoria: "Eletrônicos" })
+  .then((novoProduto) => {
+    console.log("Produto criado:", novoProduto);
+  })
+  .catch((erro) => {
+    console.error("Erro ao criar:", erro);
+  });
+```
+
+---
+
+### PATCH — Atualizar parcialmente
+
+```js
+function atualizarProduto(id, dados) {
+  return fetch(`http://localhost:3000/produtos/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(dados),
+  }).then((resposta) => resposta.json());
+}
+```
+
+---
+
+### DELETE — Remover produto
+
+```js
+function removerProduto(id) {
+  return fetch(`http://localhost:3000/produtos/${id}`, {
+    method: "DELETE",
+  }).then((resposta) => resposta.ok);
+}
+```
+
+---
+
+### Fluxo com Promises: encadeamento de operações
+
+Um exemplo prático: **criar um produto e depois recarregar a lista**
+
+```js
+criarProduto({ nome: "Teclado", preco: 150, categoria: "Eletrônicos" })
+  .then(() => {
+    console.log("Produto criado com sucesso!");
+    return buscarProdutos(); // Encadeia a próxima operação
+  })
+  .then((listaAtualizada) => {
+    console.log("Lista recarregada:", listaAtualizada);
+    renderizarProdutos(listaAtualizada);
+  })
+  .catch((erro) => {
+    console.error("Erro na operação:", erro);
+  });
+```
+
+**Vantagem do `.catch` no final:** captura erros de **toda a cadeia**.
+
+---
+
+## 5. Parte 2: Refatoração para Async/Await
+
+### GET — Listar produtos (com async/await)
+
+```js
+async function buscarProdutos() {
+  const resposta = await fetch("http://localhost:3000/produtos");
+  return await resposta.json();
+}
+
+// Uso:
+try {
+  const produtos = await buscarProdutos();
+  console.log("Produtos carregados:", produtos);
+} catch (erro) {
+  console.error("Erro ao buscar:", erro);
+}
+```
+
+---
+
+### POST — Criar produto (com async/await)
+
+```js
+async function criarProduto(produto) {
+  const resposta = await fetch("http://localhost:3000/produtos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(produto),
+  });
+  return await resposta.json();
+}
+
+// Uso:
+try {
+  const novoProduto = await criarProduto({
+    nome: "Mouse",
+    preco: 80,
+    categoria: "Eletrônicos",
+  });
+  console.log("Produto criado:", novoProduto);
+} catch (erro) {
+  console.error("Erro ao criar:", erro);
+}
+```
+
+---
+
+### PATCH — Atualizar parcialmente (com async/await)
+
+```js
+async function atualizarProduto(id, dados) {
+  const resposta = await fetch(`http://localhost:3000/produtos/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(dados),
+  });
+  return await resposta.json();
+}
+```
+
+---
+
+### DELETE — Remover produto (com async/await)
+
+```js
+async function removerProduto(id) {
+  await fetch(`http://localhost:3000/produtos/${id}`, {
+    method: "DELETE",
+  });
+}
+```
+
+---
+
+### Fluxo com Async/Await: código sequencial e legível
+
+O **mesmo exemplo anterior**, agora com `async/await`:
+
+---
+
+```js
+async function criarERecarregar() {
+  try {
+    await criarProduto({
+      nome: "Monitor",
+      preco: 800,
+      categoria: "Eletrônicos",
+    });
+    console.log("Produto criado com sucesso!");
+
+    const listaAtualizada = await buscarProdutos();
+    console.log("Lista recarregada:", listaAtualizada);
+    renderizarProdutos(listaAtualizada);
+  } catch (erro) {
+    console.error("Erro na operação:", erro);
+  }
+}
+
+// Executar
+await criarERecarregar();
+```
+
+**Vantagem:** o código **parece síncrono** (mais fácil de ler), mas funciona de forma assíncrona.
+
+---
+
+## 6. Comparação: Promises vs Async/Await
+
+| Aspecto          | Promises (`.then/.catch`) | Async/Await           |
+| ---------------- | ------------------------- | --------------------- |
+| **Legibilidade** | Encadeamento (mental)     | Sequencial (clara)    |
+| **Erro**         | `.catch` no final         | `try/catch` explícito |
+| **Debugging**    | Mais complexo             | Stack trace claro     |
+| **Browser**      | Compatível (ES6)          | Moderno (ES8)         |
+| **Performance**  | Idêntica                  | Idêntica              |
+
+**Resumo:** Ambas são idênticas por baixo (async/await é apenas sintaxe sobre Promises), mas `async/await` é mais legível.
+
+---
+
+## 7. Tratamento de erro e loading
+
+Sempre trate falhas de rede e dê feedback visual:
+
+```js
+async function carregarTela() {
+  try {
+    mostrarLoading(true);
+    const produtos = await buscarProdutos();
+    renderizarProdutos(produtos);
+    atualizarTotal(produtos);
+  } catch (erro) {
+    mostrarErro("Não foi possível carregar os produtos.");
+  } finally {
+    mostrarLoading(false);
+  }
+}
+```
+
+---
+
+## 6. Estudo de Caso: migrando o App de Produtos (Aula 3)
+
+O app da Aula 3 usava `localStorage`. Agora vamos trocar por API.
+
+```js
+// Antes (localStorage)
+let produtos = JSON.parse(localStorage.getItem("produtos")) || [];
+
+// Agora (API)
+const produtos = await buscarProdutos();
+```
+
+---
+
+### Inicialização com `DOMContentLoaded`
+
+```js
+document.addEventListener("DOMContentLoaded", async () => {
+  const produtos = await buscarProdutos();
+  renderizarProdutos(produtos);
+  atualizarTotal(produtos);
+});
+```
+
+---
+
+### Fluxo de cada ação
+
+```txt
+Evento (ex: submit)
+  → fetch à API
+  → rebuscar lista atualizada
+  → rerenderizar DOM
+```
+
+---
+
+## Prática: Atividade de Fixação 4 (escopo fechado)
+
+### Lista de Itens com API
+
+**Objetivo:** Implementar o CRUD de itens primeiro com Promises, depois refatorar para async/await.
+
+**Fase 1: Com Promises (`.then/.catch`)**
+
+---
+
+**Missões:**
+
+1. Criar `db.json` com coleção `itens`
+2. Implementar `listarItens()` com Promises
+3. Implementar `adicionarItem()` com Promises
+4. Implementar `marcarConcluido()` e `removerItem()` com Promises
+5. Encadear operações: criar item → recarregar lista → renderizar
+6. Usar `.catch` para exibir erro se servidor fora do ar
+
+---
+
+**Fase 2: Refatoração para Async/Await**
+
+**Missões:**
+
+1. Converter todas as funções para `async`
+2. Substituir `.then` por `await`
+3. Usar `try/catch` em vez de `.catch`
+4. Confirmar que o funcionamento é idêntico
+
+---
+
+**Bônus:**
+
+- Campo de busca por nome (filtrar no frontend)
+- Exibir contador de itens pendentes
+- Usar `finally` para garantir que loading sempre desaparece
+
+---
+
+## Desafio: CRUD de Produtos com API (Promises → Async/Await)
+
+**Objetivo:** Implementar o app de produtos completo, passando por ambas as abordagens.
+
+**Etapa 1: Com Promises**
+
+1. Implementar CRUD com `.then/.catch`
+2. Encadear operações corretamente
+3. Testar todas as funcionalidades
+
+**Etapa 2: Refatoração com Async/Await**
+
+1. Converter para `async/await`
+2. Usar `try/catch/finally`
+3. Garantir que funciona igual
+
+---
+
+**Funcionalidades:**
+
+1. Substituir `localStorage` por chamadas à API
+2. Carregar lista ao iniciar com `DOMContentLoaded`
+3. Criar, destacar e remover produtos via `fetch`
+4. Filtros por categoria reaproveitando lógica existente
+5. Calcular total com dados vindos da API
+
+---
+
+**Critérios de conclusão:**
+
+- Recarregar a página mantém os dados (vêm da API)
+- Nenhuma operação depende de `localStorage`
+- Tratamento completo de erros em todas as operações
+- Comparação entre Promises e Async/Await funciona identicamente
+
+---
+
+**Objetivos de Aprendizado:**
+
+✓ Configurar e usar `json-server` do zero
+✓ Entender endpoints REST e métodos HTTP
+✓ Consumir API com `fetch` e Promises (`.then/.catch`)
+✓ Consumir API com `fetch` e Async/Await
+✓ Fazer CRUD completo: GET, POST, PATCH, DELETE
+✓ Aplicar tratamento de erro e loading
+✓ Migrar app existente de `localStorage` para API
+✓ **Entender a equivalência entre Promises e Async/Await**
+
+---
+
+# Aula 5 - Assincronismo em Profundidade
+
+## Revisão da Aula 4
+
+Na aula anterior, vimos como consumir APIs com **Promises** (`.then/.catch`) e **Async/Await**, vendo que ambas são equivalentes.
+
+Agora vamos **aprofundar nos conceitos**, entendendo como o JavaScript funciona por baixo, história dos callbacks, e padrões avançados com Promises.
+
+---
+
+## 1. Como o JavaScript executa código assíncrono?
+
+JavaScript é single-thread: executa uma coisa de cada vez.
+
+Para operações demoradas (rede, timers), ele usa um modelo de **fila de callbacks**, evitando travar a execução.
+
+```js
+console.log("1");
+setTimeout(() => console.log("2"), 0);
+console.log("3");
+// Saída: 1 → 3 → 2
+```
+
+---
+
+## 2. Call Stack, Event Loop, e Web APIs
+
+Entender **como** o JavaScript executa assincronismo é fundamental:
+
+---
+
+```txt
+┌─────────────────┐
+│  Call Stack     │  (executa código síncrono)
+│  ┌───────────┐  │
+│  │ função A  │  │
+│  └───────────┘  │
+└─────────────────┘
+        ↑
+        │ (envia operações por muito tempo)
+        ↓
+┌─────────────────┐
+│  Web APIs       │  (fetch, setTimeout, etc)
+│  (navegador)    │
+└─────────────────┘
+        ↑
+        │ (coloca resultado quando pronto)
+        ↓
+┌─────────────────┐
+│  Callback Queue │  (espera até Call Stack vazio)
+│  (Promises)     │
+└─────────────────┘
+        ↑
+        │ (Event Loop move para Stack)
+        ↓
+┌─────────────────┐
+│  Event Loop     │  (monitora: Stack vazio?)
+│                 │  Se sim → move callback para Stack
+└─────────────────┘
+```
+
+---
+
+## 3. Estados de uma Promise
+
+Quando você cria uma Promise, ela começa em um estado e pode transicionar:
+
+```txt
+Pending (aguardando)
+    ↓
+    ├─→ Fulfilled (resolvida com sucesso)
+    │   • Chama .then()
+    │
+    └─→ Rejected (rejeitada com erro)
+        • Chama .catch()
+```
+
+---
+
+**Exemplo visual:**
+
+```js
+const promessa = fetch("http://localhost:3000/produtos");
+
+console.log(promessa); // Promise { <pending> }
+
+// Após alguns ms...
+// Promise { <fulfilled>: Response }
+// OU
+// Promise { <rejected>: Error }
+```
+
+---
+
+## 4. Métodos de Promise: `.then()`, `.catch()`, `.finally()`
+
+### `.then(onFulfilled)`
+
+Executa quando a Promise é **resolvida com sucesso**:
+
+```js
+fetch("http://localhost:3000/produtos").then((resposta) => {
+  console.log("Sucesso:", resposta);
+  return resposta.json();
+});
+```
+
+---
+
+### `.catch(onRejected)`
+
+Executa quando a Promise é **rejeitada** (erro):
+
+```js
+fetch("http://localhost:3000/produtos")
+  .then((resposta) => resposta.json())
+  .catch((erro) => {
+    console.error("Erro:", erro.message);
+  });
+```
+
+**Importante:** `.catch` captura erros de **toda a cadeia previous**, não só do último `.then`.
+
+---
+
+### `.finally(onFinally)`
+
+Executa **independentemente** de sucesso ou erro:
+
+```js
+fetch("http://localhost:3000/produtos")
+  .then((resposta) => resposta.json())
+  .catch((erro) => console.error("Erro:", erro))
+  .finally(() => {
+    console.log("Operação finalizada (com ou sem erro)");
+  });
+```
+
+---
+
+## 5. Encadeamento de Promises: `.then()` retorna Promise
+
+Cada `.then()` retorna uma **nova Promise**, permitindo encadear:
+
+```js
+fetch("http://localhost:3000/produtos/1")
+  .then((resposta) => resposta.json()) // Promise 1
+  .then((produto) => {
+    // Promise 2
+    console.log("Produto:", produto.nome);
+    return produto.preco * 2; // Retorna valor
+  })
+  .then((precoDoublado) => {
+    // Promise 3
+    console.log("Preço dobrado:", precoDoublado);
+  })
+  .catch((erro) => console.error("Erro:", erro)); // Captura todo erro
+```
+
+---
+
+**Fluxo:**
+
+1. Fetch retorna Promise
+2. Primeiro `.then`: recebe Response, retorna Promise de `json()`
+3. Segundo `.then`: recebe objeto, calcula, retorna número
+4. Terceiro `.then`: recebe número, imprime
+5. Se qualquer erro: `.catch` captura
+
+---
+
+## 6. Callback Hell vs Promise
+
+Antes de Promises, a forma de lidar com assincronismo era passar callbacks como argumento.
+
+Quando as etapas se encadeavam, o código virava uma pirâmide:
+
+---
+
+```js
+buscarDados(
+  function (dados) {
+    processarDados(
+      dados,
+      function (resultado) {
+        salvarResultado(
+          resultado,
+          function () {
+            atualizarTela();
+          },
+          function (erroSalvar) {
+            mostrarErro(erroSalvar);
+          },
+        );
+      },
+      function (erroProcessar) {
+        mostrarErro(erroProcessar);
+      },
+    );
+  },
+  function (erroBusca) {
+    mostrarErro(erroBusca);
+  },
+);
+```
+
+---
+
+### Por que isso era um problema?
+
+- Fluxo cresce em aninhamento (pirâmide da perdição)
+- Erro tratado separadamente em cada nível
+- Reuso e leitura prejudicados
+
+Com Promise, o mesmo fluxo vira **encadeamento linear**:
+
+```txt
+callback -> callback -> callback  (vertical: cresce pra dentro)
+promise  -> .then -> .then -> .catch  (horizontal: cresce pra baixo)
+```
+
+O `.catch` centraliza o tratamento de erros de toda a cadeia.
+
+---
+
+## 7. Padrões Avançados com Promises
+
+### `Promise.all()`: Aguardar múltiplas Promises
+
+Útil para operações paralelas:
+
+---
+
+```js
+Promise.all([
+  fetch("http://localhost:3000/produtos"),
+  fetch("http://localhost:3000/categorias"),
+  fetch("http://localhost:3000/vendas"),
+])
+  .then((respostas) => {
+    // respostas é um array com as 3 respostas
+    return Promise.all(respostas.map((r) => r.json()));
+  })
+  .then(([produtos, categorias, vendas]) => {
+    console.log("Tudo carregado:", { produtos, categorias, vendas });
+  })
+  .catch((erro) => {
+    // Se QUALQUER uma falhar, vai para catch
+    console.error("Erro em alguma requisição:", erro);
+  });
+```
+
+---
+
+### Com Async/Await (mais legível):
+
+```js
+async function carregarTudo() {
+  try {
+    const [prodResp, catResp, vendResp] = await Promise.all([
+      fetch("http://localhost:3000/produtos"),
+      fetch("http://localhost:3000/categorias"),
+      fetch("http://localhost:3000/vendas"),
+    ]);
+
+    const [produtos, categorias, vendas] = await Promise.all([
+      prodResp.json(),
+      catResp.json(),
+      vendResp.json(),
+    ]);
+
+    console.log("Tudo carregado:", { produtos, categorias, vendas });
+  } catch (erro) {
+    console.error("Erro:", erro);
+  }
+}
+
+await carregarTudo();
+```
+
+---
+
+### `Promise.race()`: Primeira Promise a resolver
+
+Útil para timeouts:
+
+```js
+Promise.race([
+  fetch("http://localhost:3000/produtos"),
+  new Promise((_, reject) =>
+    setTimeout(() => reject(new Error("Timeout")), 5000),
+  ),
+])
+  .then((resposta) => resposta.json())
+  .catch((erro) => console.error("Erro ou timeout:", erro));
+```
+
+---
+
+## 8. Referência Rápida: Quando Usar Promises vs Async/Await
+
+| Situação                          | Recomendação                |
+| --------------------------------- | --------------------------- |
+| **Iniciante**                     | Comece com Promises         |
+| **Encadeamento simples** (2-3)    | Promises OK                 |
+| **Lógica complexa**               | Async/Await                 |
+| **Múltiplas operações paralelas** | `Promise.all` + async/await |
+| **Timeouts**                      | `Promise.race`              |
+| **Novo código**                   | Async/Await                 |
+
+---
+
+## 9. Estudo de Caso: mesma aplicação, dois estilos
+
+Usar a aplicação da Aula 4 (mesmo `db.json` e mesma interface) em **dois estilos**:
+
+1. Versão com `fetch` + Promise (`.then/.catch`)
+2. Mesma lógica, mas com `async/await`
+
+---
+
+## Prática: Atividade de Fixação 5
+
+### Comparar Estilos: Promises vs Async/Await em Profundidade
+
+**Objetivo:** Entender a **equivalência** entre Promises e Async/Await e aprender quando cada um é útil.
+
+**Missão 1: Implementar com Promises puro**
+
+Criar um app simples (lista de tarefas) usando **apenas Promises**:
+
+---
+
+```js
+function listarTarefas() {
+  return fetch("http://localhost:3000/tarefas").then((r) => r.json());
+}
+
+function criarTarefa(texto) {
+  return fetch("http://localhost:3000/tarefas", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ texto, concluida: false }),
+  })
+    .then((r) => r.json())
+    .then((novaTarefa) => {
+      console.log("Tarefa criada:", novaTarefa);
+      return listarTarefas(); // Recarregar lista
+    });
+}
+
+// Uso
+criarTarefa("Estudar Promises")
+  .then((lista) => console.log("Lista atualizada:", lista))
+  .catch((erro) => console.error("Erro:", erro));
+```
+
+---
+
+**Missão 2: Implementar o mesmo com Async/Await**
+
+Mesma lógica, novo estilo:
+
+---
+
+```js
+async function listarTarefas() {
+  const resposta = await fetch("http://localhost:3000/tarefas");
+  return await resposta.json();
+}
+
+async function criarTarefa(texto) {
+  const resposta = await fetch("http://localhost:3000/tarefas", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ texto, concluida: false }),
+  });
+
+  const novaTarefa = await resposta.json();
+  console.log("Tarefa criada:", novaTarefa);
+
+  const lista = await listarTarefas(); // Recarregar lista
+  return lista;
+}
+
+// Uso
+try {
+  const lista = await criarTarefa("Estudar Async/Await");
+  console.log("Lista atualizada:", lista);
+} catch (erro) {
+  console.error("Erro:", erro);
+}
+```
+
+---
+
+**Missão 3: Comparar os dois estilos**
+
+1. Execute ambas as versões
+2. Confirme que funcionam igual
+3. Analise qual é mais fácil de ler
+4. Reescreva ambas com `Promise.all` para carregar múltiplos dados
+
+---
+
+**Critérios de aceitação:**
+
+- Ambas as versões funcionam identicamente
+- Erros tratados corretamente em ambas
+- Você consegue converter Promises ↔ Async/Await
+- Entende que async/await é apenas sintaxe sobre Promises
+
+---
+
+## Desafio Final
+
+**Objetivo:** Masterizar Promises e Async/Await com operações complexas.
+
+### Versão 1: Com Promises Puro
+
+---
+
+```js
+function inicializarApp() {
+  mostrarLoading(true);
+
+  return Promise.all([
+    fetch("http://localhost:3000/produtos").then((r) => r.json()),
+    fetch("http://localhost:3000/categorias").then((r) => r.json()),
+    fetch("http://localhost:3000/vendas").then((r) => r.json()),
+  ])
+    .then(([produtos, categorias, vendas]) => {
+      renderizarProdutos(produtos);
+      renderizarCategorias(categorias);
+      atualizarTotal(vendas);
+    })
+    .catch((erro) => {
+      mostrarErro("Falha ao carregar dados");
+    })
+    .finally(() => {
+      mostrarLoading(false);
+    });
+}
+```
+
+---
+
+### Versão 2: Com Async/Await (recomendada)
+
+```js
+async function inicializarApp() {
+  try {
+    mostrarLoading(true);
+
+    const [produtos, categorias, vendas] = await Promise.all([
+      fetch("http://localhost:3000/produtos").then((r) => r.json()),
+      fetch("http://localhost:3000/categorias").then((r) => r.json()),
+      fetch("http://localhost:3000/vendas").then((r) => r.json()),
+    ]);
+
+    renderizarProdutos(produtos);
+    renderizarCategorias(categorias);
+    atualizarTotal(vendas);
+  } catch (erro) {
+    mostrarErro("Falha ao carregar dados");
+  } finally {
+    mostrarLoading(false);
+  }
+}
+
+await inicializarApp();
+```
+
+---
+
+**Missões:**
+
+1. Implementar ambas as versões
+2. Adicionar `loading` em todas as operações
+3. Padronizar camada de API (`construirFetch` reutilizável)
+4. Testar com múltiplos erros simultâneos
+5. Comparar performance (dica: é idêntica)
+
+---
+
+**Objetivos de Aprendizado:**
+
+✓ Entender o salto histórico: callbacks → Promises → async/await
+✓ Dominar `.then()`, `.catch()`, `.finally()`
+✓ Usar `Promise.all()` para operações paralelas
+✓ Refatorar entre Promises e Async/Await com confiança
+✓ Aplicar tratamento de erro consistente
+✓ **Saber que Async/Await é apenas sintaxe sobre Promises** (por baixo, funcionam igual)
+
+---
+
+# FIM!
