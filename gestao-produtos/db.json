@@ -1,0 +1,29 @@
+{
+  "produtos": [
+    {
+      "id": "1",
+      "nome": "Notebook",
+      "preco": 5500,
+      "categoria": "Eletrônicos"
+    },
+    {
+      "id": "2",
+      "nome": "Arroz",
+      "preco": 30,
+      "categoria": "Alimentos"
+    },
+    {
+      "nome": "Headphone",
+      "preco": 500,
+      "categoria": "Eletrônicos",
+      "id": "uS59VzhRZcg"
+    },
+    {
+      "nome": "Coca-Cola 1l",
+      "preco": 8,
+      "categoria": "Alimentos",
+      "id": "8FHGlllT0e4"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}

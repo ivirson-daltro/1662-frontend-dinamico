@@ -1,15 +1,31 @@
-function obterProdutos() {
-  //   return JSON.parse(localStorage.getItem("produtos")) || [];
-  return JSON.parse(sessionStorage.getItem("produtos")) || [];
+function obterProdutosService() {
+  return fetch("http://localhost:3000/produtos").then((resposta) =>
+    resposta.json(),
+  );
 }
 
-function cadastrarProduto(produto) {
-  const produtos = obterProdutos();
-  produtos.push(produto);
-  //   localStorage.setItem("produtos", JSON.stringify(produtos));
-  sessionStorage.setItem("produtos", JSON.stringify(produtos));
+function obterProdutoPeloIdService(id) {
+  return fetch(`http://localhost:3000/produtos/${id}`).then((resposta) =>
+    resposta.json(),
+  );
 }
 
-function editarProduto() {}
+function cadastrarProdutoService(produto) {
+  return fetch("http://localhost:3000/produtos", {
+    method: "POST",
+    body: JSON.stringify(produto),
+  }).then((resposta) => resposta.json());
+}
 
-function excluirProduto() {}
+function editarProdutoService(produto) {
+  return fetch(`http://localhost:3000/produtos/${produto.id}`, {
+    method: "PUT",
+    body: JSON.stringify(produto),
+  }).then((resposta) => resposta.json());
+}
+
+function excluirProdutoService(id) {
+  return fetch(`http://localhost:3000/produtos/${id}`, {
+    method: "DELETE",
+  }).then((resposta) => resposta.json());
+}

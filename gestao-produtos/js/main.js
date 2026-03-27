@@ -29,42 +29,54 @@ form.addEventListener("submit", (event) => {
 });
 
 function salvarProduto(produto) {
-  produto.id = new Date().getTime();
-  cadastrarProduto(produto);
-  form.reset();
-  exibirProdutos();
+  cadastrarProdutoService(produto)
+    .then(() => {
+      form.reset();
+      exibirProdutos();
+    })
+    .catch((erro) => {
+      console.log(erro);
+    });
 }
 
 function preencheFormularioEdicao(event) {
   const id = event.target.dataset.id;
-  const produto = produtos.find((p) => p.id == id);
-  campoNome.value = produto.nome;
-  campoPreco.value = produto.preco;
-  campoCategoria.value = produto.categoria;
-  campoId.value = produto.id;
-  form.setAttribute("data-action", "editar");
+  obterProdutoPeloIdService(id)
+    .then((resposta) => {
+      campoNome.value = resposta.nome;
+      campoPreco.value = resposta.preco;
+      campoCategoria.value = resposta.categoria;
+      campoId.value = resposta.id;
+      form.setAttribute("data-action", "editar");
+    })
+    .catch((erro) => {
+      console.log(erro);
+    });
 }
 
 function editarProduto(produtoEditado) {
-  const produtos = obterProdutos();
-  const produto = produtos.find((p) => p.id === produtoEditado.id);
-  produto.nome = produtoEditado.nome;
-  produto.preco = produtoEditado.preco;
-  produto.categoria = produtoEditado.categoria;
-
-  form.setAttribute("data-action", "salvar");
-  form.reset();
-  exibirProdutos();
+  editarProdutoService(produtoEditado)
+    .then(() => {
+      form.setAttribute("data-action", "salvar");
+      form.reset();
+      exibirProdutos();
+    })
+    .catch((erro) => {
+      console.log(erro);
+    });
 }
 
 function excluirProduto(event) {
   const result = confirm("Deseja mesmo excluir o produto?");
-
   if (result) {
     const id = event.target.dataset.id;
-    const produtos = obterProdutos();
-    const index = produtos.findIndex((p) => p.id == id);
-    produtos.splice(index, 1);
-    exibirProdutos();
+    excluirProdutoService(id)
+      .then((resposta) => {
+        console.log(resposta);
+        exibirProdutos();
+      })
+      .catch((erro) => {
+        console.log(erro);
+      });
   }
 }

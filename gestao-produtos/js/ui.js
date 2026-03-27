@@ -1,7 +1,17 @@
 function exibirProdutos() {
+  obterProdutosService()
+    .then((resposta) => {
+      renderizaProdutos(resposta);
+    })
+    .catch((erro) => {
+      console.log(erro);
+    });
+}
+
+function renderizaProdutos(produtos) {
   const listaProdutos = document.querySelector("#lista-produtos");
   listaProdutos.innerHTML = "";
-  const produtos = obterProdutos();
+
   produtos.forEach((produto) => {
     const divCol = criaElemento(
       "div",
