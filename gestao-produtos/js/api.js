@@ -1,7 +1,6 @@
-function obterProdutosService() {
-  return fetch("http://localhost:3000/produtos").then((resposta) =>
-    resposta.json(),
-  );
+async function obterProdutosService() {
+  const resposta = await fetch("http://localhost:3000/produtos");
+  return await resposta.json();
 }
 
 function obterProdutoPeloIdService(id) {
@@ -10,11 +9,12 @@ function obterProdutoPeloIdService(id) {
   );
 }
 
-function cadastrarProdutoService(produto) {
-  return fetch("http://localhost:3000/produtos", {
+async function cadastrarProdutoService(produto) {
+  const resposta = await fetch("http://localhost:3000/produtos", {
     method: "POST",
     body: JSON.stringify(produto),
-  }).then((resposta) => resposta.json());
+  });
+  return await resposta.json();
 }
 
 function editarProdutoService(produto) {

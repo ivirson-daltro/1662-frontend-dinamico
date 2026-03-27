@@ -28,15 +28,14 @@ form.addEventListener("submit", (event) => {
   }
 });
 
-function salvarProduto(produto) {
-  cadastrarProdutoService(produto)
-    .then(() => {
-      form.reset();
-      exibirProdutos();
-    })
-    .catch((erro) => {
-      console.log(erro);
-    });
+async function salvarProduto(produto) {
+  try {
+    await cadastrarProdutoService(produto);
+    form.reset();
+    exibirProdutos();
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 function preencheFormularioEdicao(event) {

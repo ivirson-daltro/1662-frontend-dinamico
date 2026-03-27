@@ -1,11 +1,10 @@
-function exibirProdutos() {
-  obterProdutosService()
-    .then((resposta) => {
-      renderizaProdutos(resposta);
-    })
-    .catch((erro) => {
-      console.log(erro);
-    });
+async function exibirProdutos() {
+  try {
+    const resposta = await obterProdutosService();
+    renderizaProdutos(resposta);
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 function renderizaProdutos(produtos) {
